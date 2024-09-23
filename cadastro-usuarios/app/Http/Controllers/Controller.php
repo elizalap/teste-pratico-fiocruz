@@ -2,76 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Routing\Controller as BaseController;
 
-class UserController extends Controller
+class Controller extends BaseController
 {
-    public function index()
-    {
-        $users = User::all();
-        return view('users.index', compact('users'));
-    }
-
-    public function create()
-    {
-        return view('users.create');
-    }
-
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:40',
-            'email' => 'required|string|email|max:40|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'profile' => 'required|in:Administrador,Convidado',
-        ]);
-
-        $user = new User();
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->password = Hash::make($request->password);
-        $user->profile = $request->profile;
-        $user->save();
-
-        return redirect()->route('users.index')->with('success', 'Usuário criado com sucesso!');
-    }
-
-    public function edit($id)
-    {
-        $user = User::find($id);
-        return view('users.edit', compact('user'));
-    }
-
-    public function update(Request $request, $id)
-    {
-        $request->validate([
-            'name' => 'required|string|max:40',
-            'email' => 'required|string|email|max:40|unique:users,email,' . $id,
-            'password' => 'nullable|string|min:8|confirmed',
-            'profile' => 'required|in:Administrador,Convidado',
-        ]);
-
-        $user = User::find($id);
-        $user->name = $request->name;
-        $user->email = $request->email;
-        
-        if ($request->password) {
-            $user->password = Hash::make($request->password);
-        }
-        
-        $user->profile = $request->profile;
-        $user->save();
-
-        return redirect()->route('users.index')->with('success', 'Usuário atualizado com sucesso!');
-    }
-
-    public function destroy($id)
-    {
-        $user = User::find($id);
-        $user->delete();
-
-        return redirect()->route('users.index')->with('success', 'Usuário excluído com sucesso!');
-    }
+    use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 }

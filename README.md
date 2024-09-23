@@ -5,7 +5,7 @@
 ## Descrição do projeto
 Este projeto faz parte de um desafio de código onde crio uma aplicação para gerenciar usuários utilizando o framework Laravel.
 
-O projeto permite criar, listar, atualizar e deletar registros de beneficiários, médicos, hospitais e consultas.
+O projeto permite criar, listar, atualizar e deletar usuários.
 
 ## 🛠 Regras de Negócio
 

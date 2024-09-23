@@ -3,64 +3,100 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $users = User::orderBy('created_at', 'desc')->paginate(6);
+        return view('pages.users.index', compact('users'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return view('pages.users.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:40',
+            'email' => 'required|string|email|max:40|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'profile' => 'required|in:Administrador,Convidado',
+        ]);
+
+        $user = new User();
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->password = Hash::make($request->password);
+        $user->profile = $request->profile;
+        $user->save();
+
+        return redirect()->route('users.index')->with('success', 'Usuário criado com sucesso!');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(User $user)
+    public function show($id)
     {
-        //
+        $user = User::findOrFail($id);
+        return view('pages.users.show', compact('user'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(User $user)
+    public function edit($id)
     {
-        //
+        $user = User::findOrFail($id);
+        return view('pages.users.edit', compact('user'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, User $user)
+    public function update(Request $request, $id)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:40',
+            'email' => 'required|string|email|max:40|unique:users,email,' . $id,
+            'current_password' => 'required|string',
+            'profile' => 'required|in:Administrador,Convidado',
+        ]);
+
+        $user = User::find($id);
+        if (!Hash::check($request->current_password, $user->password)) {
+            return back()->withErrors(['current_password' => 'A senha atual está incorreta.']);
+        }
+        
+        $user->update($request->all());
+        return redirect()->route('users.index')->with('success', 'Usuário atualizado com sucesso!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(User $user)
+    public function destroy($id)
     {
-        //
+        $user = User::find($id);
+        $user->delete();
+
+        return redirect()->route('users.index')->with('success', 'Usuário excluído com sucesso!');
+    }
+
+    public function showChangePasswordForm($id)
+    {
+        $user = User::find($id);
+        return view('pages.users.change-password', compact('user'));
+    }
+
+    public function changePassword(Request $request, $id)
+    {
+        $request->validate([
+            'current_password' => 'required',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = User::findOrFail($id);
+        if (!Hash::check($request->current_password, $user->password)) {
+            return back()->withErrors(['current_password' => 'A senha atual está incorreta']);
+        }
+
+        $user->password = Hash::make($request->new_password);
+        $user->update();
+
+        return redirect()->route('users.show', $user->id)->with('success', 'Senha alterada com sucesso!');
     }
 }
